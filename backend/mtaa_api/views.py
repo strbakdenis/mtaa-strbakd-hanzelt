@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from backend.mtaa_api.models import Users
+from backend.mtaa_api.models import Users, Cities, Activities
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -128,3 +128,34 @@ def user_login(request):
         return JsonResponse({"token": user_object.token}, status=200, safe=False)
     else:
         return HttpResponse(status=404)
+
+
+@csrf_exempt
+def get_cities(request):
+
+    cities = Cities.objects.all()
+    array = []
+    for city in cities:
+        array.append({"id": city.id, "name": city.name})
+
+    return JsonResponse(array, status=200, safe=False)
+
+
+@csrf_exempt
+def get_activities(request):
+
+    city = request.GET.get('city', None)
+    activity_type = request.GET.get('activity_type', None)
+    array = []
+
+    try:
+        activities = Activities.objects.filter(city=city, activity_type=activity_type)
+    except Activities.DoesNotExist:
+        activities = None
+    if activities:
+        for activity in activities:
+            array.append({"id": activity.id, "name": activity.name, "thumbnail_image": str(activity.thumbnail_image),
+                          "thumbnail_description": activity.thumbnail_description})
+        return JsonResponse(array, status=200, safe=False)
+    else:
+        return HttpResponse(status=204)

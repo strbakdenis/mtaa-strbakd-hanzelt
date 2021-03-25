@@ -19,5 +19,5 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('users/', include('backend.mtaa_api.urls'))
+    path('', include('backend.mtaa_api.urls')),
 ]
