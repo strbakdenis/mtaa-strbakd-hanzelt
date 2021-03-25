@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class QuickstartConfig(AppConfig):
-    name = 'api'
+    name = 'mtaa_api'
