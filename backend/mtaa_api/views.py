@@ -187,18 +187,26 @@ def add_activity(request):
     
     body = json.loads(request.body)
 
+    token = request.GET.get('token', None)
+
     if check_activity_fields(body) is False:
         return HttpResponse(status=400)
     
     try:
-        activity_object = Activities.objects.filter(name=body['name'])
-    except Activities.DoesNotExist:
+        user_object = Users.objects.filter(token=token)
+    except Users.DoesNotExist:
         user_object = None
     if user_object:
-        return HttpResponse(status=409)
+        try:
+        activity_object = Activities.objects.filter(name=body['name'])
+        except Activities.DoesNotExist:
+        user_object = None
+        if user_object:
+            return HttpResponse(status=409)
+        else:
+            activity = Activities(name=body['name'], city=body['city'], address=body['address'], description=body['description'])
+            activity.save()
+
+            return HttpResponse(status=201)
     else:
-        activity = Activities(name=body['name'], city=body['city'], address=body['address'], description=body['description'])
-        activity.save()
-
-    return HttpResponse(status=201)
-
+        return HttpResponse(status=401)
