@@ -32,6 +32,13 @@ def check_required_fields(request_body):
             return False
     return True
 
+def check_activity_fields(request_body):
+    required_fields = ['city', 'name', 'address', 'description']
+
+    for field in required_fields:
+        if field not in request_body:
+            return False
+    return True
 
 def test_user(request):
     user = Users(email_address = 'john.doe@gmail.com', password = 'qwerty', token = 'asdfgh', registration_date='1900-10-10')
@@ -159,3 +166,39 @@ def get_activities(request):
         return JsonResponse(array, status=200, safe=False)
     else:
         return HttpResponse(status=204)
+
+@csrf_exempt
+def get_activity(request):
+    activity_id = request.GET.get('id', None)
+    response = {}
+    try:
+        activity = Activities.objects.filter(id=activity_id)
+    except Activities.DoesNotExist:
+        activity = None
+    if activity:
+        act = {"name": activity.name, "city": activity.city, "address": activity.address, "text": activity.description}
+        response.update(act)
+        return JsonResponse(response, status=200, safe=False)
+    else:
+        return HttpResponse(status=404)
+
+@csrf_exempt
+def add_activity(request):
+    
+    body = json.loads(request.body)
+
+    if check_activity_fields(body) is False:
+        return HttpResponse(status=400)
+    
+    try:
+        activity_object = Activities.objects.filter(name=body['name'])
+    except Activities.DoesNotExist:
+        user_object = None
+    if user_object:
+        return HttpResponse(status=409)
+    else:
+        activity = Activities(name=body['name'], city=body['city'], address=body['address'], description=body['description'])
+        activity.save()
+
+    return HttpResponse(status=201)
+
