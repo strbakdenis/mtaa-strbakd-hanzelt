@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from backend.mtaa_api.models import Users, Cities, Activities, ActivityTypes
+from backend.mtaa_api.models import Users, Cities, Activities, ActivityTypes, Images
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -10,15 +10,26 @@ import base64
 from django.utils import timezone
 
 
+def token_in(token):
+    try:
+        token_object = Users.objects.filter(token=token)
+    except Users.DoesNotExist:
+        token_object = None
+    if token_object:
+        return True
+    else:
+        return False
+
+
 def generate_token():
-    return(''.join(random.choices(string.ascii_letters + string.digits, k=16)))
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
 
 def check_email(email):
 
     regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
-    if(re.search(regex,email)):
+    if re.search(regex, email):
         return True
 
     else:
@@ -47,6 +58,7 @@ def check_activity_fields(request_body):
 def user_registration(request):
 
     body = json.loads(request.body)
+    token = True
     if check_required_fields(body) is False:
         return HttpResponse(status=400)
 
@@ -60,7 +72,10 @@ def user_registration(request):
     if user_object:
         return HttpResponse(status=409)
     else:
-        random_token = generate_token()
+        while token:
+            random_token = generate_token()
+            token = token_in(random_token)
+
         user = Users(email_address=body['email_address'], password=body['password'], token=random_token,
                      registration_date=timezone.now())
         user.save()
@@ -139,6 +154,7 @@ def get_cities(request):
 
     cities = Cities.objects.all()
     array = []
+    skuska_obrazkov()
     for city in cities:
         array.append({"id": city.id, "name": city.name})
 
@@ -171,12 +187,18 @@ def get_activities(request):
 def get_activity(request):
     activity_id = request.GET.get('id', None)
     response = {}
+    array_of_photos = []
     try:
         activity = Activities.objects.get(id=activity_id)
     except Activities.DoesNotExist:
         activity = None
     if activity:
-        act = {"name": activity.name, "city": activity.city.name, "address": activity.address, "text": activity.description}
+        images = Images.objects.filter(activity_id=activity_id).values('image')
+        for image in images:
+            array_of_photos.append(str(image['image'].tobytes()))
+
+        act = {"name": activity.name, "city": activity.city.name, "address": activity.address,
+               "text": activity.description, "photos": array_of_photos}
         response.update(act)
         return JsonResponse(response, status=200, safe=False)
     else:
@@ -187,6 +209,7 @@ def get_activity(request):
 def add_activity(request):
     
     body = json.loads(request.body)
+    array_of_photos = body['photos']
 
     token = request.GET.get('token', None)
 
@@ -221,7 +244,24 @@ def add_activity(request):
                                   city=Cities.objects.get(id=city_number), address=body['address'],
                                   thumbnail_description=body['thumbnail_description'], description=body['description'])
             activity.save()
+            premenna = Activities.objects.get(name=body['name']).id
+            for image in array_of_photos:
+                image_object = Images(activity_id=premenna, image=str(image).encode('utf-8'))
+                image_object.save()
+                print(str(image).encode('utf-8'))
 
             return HttpResponse(status=201)
     else:
         return HttpResponse(status=401)
+
+
+def skuska_obrazkov():
+
+    images = Images.objects.filter(activity_id=29).values('image')
+    a = 1
+
+    for image in images:
+        imgdata = base64.b64decode(image['image'].tobytes())
+        with open("image" + str(a) + ".png", 'wb') as f:
+            f.write(imgdata)
+        a = a + 1
