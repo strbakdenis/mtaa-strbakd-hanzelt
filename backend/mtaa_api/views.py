@@ -154,7 +154,6 @@ def get_cities(request):
 
     cities = Cities.objects.all()
     array = []
-    skuska_obrazkov()
     for city in cities:
         array.append({"id": city.id, "name": city.name})
 
@@ -257,7 +256,7 @@ def add_activity(request):
 
 def skuska_obrazkov():
 
-    images = Images.objects.filter(activity_id=29).values('image')
+    images = Images.objects.filter(activity_id=30).values('image')
     a = 1
 
     for image in images:
