@@ -1,0 +1,11 @@
+asgiref==3.3.1
+backend==0.2.4.1
+Cities==1.1
+Django==3.1.6
+numpy==1.20.1
+psycopg2==2.8.6
+psycopg2-binary==2.8.6
+PyPrind==2.11.2
+pytz==2021.1
+sqlparse==0.4.1
+users==1.0.dev0

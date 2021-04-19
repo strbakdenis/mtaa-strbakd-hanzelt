@@ -208,7 +208,7 @@ def get_activity(request):
 def add_activity(request):
     
     body = json.loads(request.body)
-    array_of_photos = body['photos']
+    array_of_photos = body["photos"]
 
     token = request.GET.get('token', None)
 
@@ -241,13 +241,13 @@ def add_activity(request):
         else:
             activity = Activities(name=body['name'], activity_type=ActivityTypes.objects.get(id=body['activity_type']),
                                   city=Cities.objects.get(id=city_number), address=body['address'],
+                                  thumbnail_image=str(array_of_photos[0]).encode('utf-8'),
                                   thumbnail_description=body['thumbnail_description'], description=body['description'])
             activity.save()
             premenna = Activities.objects.get(name=body['name']).id
             for image in array_of_photos:
                 image_object = Images(activity_id=premenna, image=str(image).encode('utf-8'))
                 image_object.save()
-                print(str(image).encode('utf-8'))
 
             return HttpResponse(status=201)
     else:
